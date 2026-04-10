@@ -1,17 +1,29 @@
 "use client";
 
-import type { FormEvent } from "react";
+import type { SubmitEvent } from "react";
 
-export default function Home() {
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+const SESSION_ERROR_MESSAGE = "LMS 세션 연결 중 오류가 발생했습니다.";
 
-    await fetch("http://localhost:8787/session", {
+async function handleSubmit(
+  event: SubmitEvent<HTMLFormElement>,
+): Promise<void> {
+  event.preventDefault();
+
+  try {
+    const response = await fetch("http://localhost:8787/session", {
       method: "GET",
       credentials: "include",
     });
-  };
 
+    if (!response.ok) {
+      throw new Error(`Session request failed: ${response.status}`);
+    }
+  } catch {
+    alert(SESSION_ERROR_MESSAGE);
+  }
+}
+
+export default function Home() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-base-200 p-4">
       <form
