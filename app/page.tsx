@@ -2,24 +2,35 @@
 
 import type { SubmitEvent } from "react";
 
-const SESSION_ERROR_MESSAGE = "LMS 세션 연결 중 오류가 발생했습니다.";
+const LOGIN_ERROR_MESSAGE = "LMS 로그인 중 오류가 발생했습니다.";
 
 async function handleSubmit(
   event: SubmitEvent<HTMLFormElement>,
 ): Promise<void> {
   event.preventDefault();
+  const formData = new FormData(event.currentTarget);
+  const usr_id = String(formData.get("id") ?? "");
+  const usr_pwd = String(formData.get("pwd") ?? "");
+  const body = [
+    `usr_id=${encodeURIComponent(usr_id).replace(/%20/g, "+")}`,
+    `usr_pwd=${encodeURIComponent(usr_pwd).replace(/%20/g, "+")}`,
+  ].join("&");
 
   try {
-    const response = await fetch("http://localhost:8787/session", {
-      method: "GET",
+    const loginResponse = await fetch("http://localhost:8787/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
       credentials: "include",
+      body,
     });
 
-    if (!response.ok) {
-      throw new Error(`Session request failed: ${response.status}`);
+    if (!loginResponse.ok) {
+      throw new Error(`Login request failed: ${loginResponse.status}`);
     }
   } catch {
-    alert(SESSION_ERROR_MESSAGE);
+    alert(LOGIN_ERROR_MESSAGE);
   }
 }
 
@@ -33,12 +44,14 @@ export default function Home() {
         <div className="card-body gap-4">
           <input
             type="text"
+            name="id"
             placeholder="학번"
             className="input input-bordered w-full"
             autoComplete="username"
           />
           <input
             type="password"
+            name="pwd"
             placeholder="비밀번호"
             className="input input-bordered w-full"
             autoComplete="current-password"
