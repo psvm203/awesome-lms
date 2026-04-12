@@ -138,7 +138,7 @@ export default function Home() {
                     <span className="text-base font-medium leading-snug">
                       {`${lecture.subject_name} - ${lecture.title}`}
                     </span>
-                    <button type="button" className="btn btn-sm btn-outline shrink-0">
+                    <button type="button" className="btn btn-sm btn-info shrink-0 text-info-content">
                       수강
                     </button>
                   </div>
