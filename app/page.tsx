@@ -16,6 +16,10 @@ export default function Home() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lectures, setLectures] = useState<Lecture[] | null>(null);
 
+  function handleLogout(): void {
+    setLectures(null);
+  }
+
   async function handleSubmit(event: SubmitEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
 
@@ -106,11 +110,14 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-base-200 p-4 sm:p-8">
       <section className="mx-auto w-full max-w-3xl space-y-5">
-        <header>
+        <header className="flex items-start justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold sm:text-3xl">강의 목록</h1>
             <p className="text-sm text-base-content/70">수강할 강의를 선택해 주세요.</p>
           </div>
+          <button type="button" className="btn btn-sm btn-outline" onClick={handleLogout}>
+            로그아웃
+          </button>
         </header>
 
         {lectures.length === 0 ? (
