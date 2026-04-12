@@ -1,46 +1,55 @@
 "use client";
 
-import type { SubmitEvent } from "react";
+import { useState, type SubmitEvent } from "react";
 
 const LOGIN_ERROR_MESSAGE = "LMS 로그인 중 오류가 발생했습니다.";
 const INVALID_CREDENTIALS_MESSAGE = "학번 또는 비밀번호가 잘못되었습니다.";
 
-async function handleSubmit(
-  event: SubmitEvent<HTMLFormElement>,
-): Promise<void> {
-  event.preventDefault();
-  const formData = new FormData(event.currentTarget);
-  const usr_id = String(formData.get("id") ?? "");
-  const usr_pwd = String(formData.get("pwd") ?? "");
-  const body = [
-    `usr_id=${encodeURIComponent(usr_id).replace(/%20/g, "+")}`,
-    `usr_pwd=${encodeURIComponent(usr_pwd).replace(/%20/g, "+")}`,
-  ].join("&");
+export default function Home() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  try {
-    const loginResponse = await fetch("http://localhost:8787/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      credentials: "include",
-      body,
-    });
+  async function handleSubmit(event: SubmitEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault();
 
-    if (loginResponse.status === 401) {
-      alert(INVALID_CREDENTIALS_MESSAGE);
+    if (isSubmitting) {
       return;
     }
 
-    if (!loginResponse.ok) {
-      throw new Error(`Login request failed: ${loginResponse.status}`);
-    }
-  } catch {
-    alert(LOGIN_ERROR_MESSAGE);
-  }
-}
+    const formData = new FormData(event.currentTarget);
+    const usr_id = String(formData.get("id") ?? "");
+    const usr_pwd = String(formData.get("pwd") ?? "");
+    const body = [
+      `usr_id=${encodeURIComponent(usr_id).replace(/%20/g, "+")}`,
+      `usr_pwd=${encodeURIComponent(usr_pwd).replace(/%20/g, "+")}`,
+    ].join("&");
 
-export default function Home() {
+    setIsSubmitting(true);
+
+    try {
+      const loginResponse = await fetch("http://localhost:8787/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        credentials: "include",
+        body,
+      });
+
+      if (loginResponse.status === 401) {
+        alert(INVALID_CREDENTIALS_MESSAGE);
+        return;
+      }
+
+      if (!loginResponse.ok) {
+        throw new Error(`Login request failed: ${loginResponse.status}`);
+      }
+    } catch {
+      alert(LOGIN_ERROR_MESSAGE);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-base-200 p-4">
       <form
@@ -62,7 +71,12 @@ export default function Home() {
             className="input input-bordered w-full"
             autoComplete="current-password"
           />
-          <button type="submit" className="btn btn-primary w-full">
+          <button
+            type="submit"
+            className="btn btn-primary w-full"
+            disabled={isSubmitting}
+            aria-busy={isSubmitting}
+          >
             로그인
           </button>
         </div>
