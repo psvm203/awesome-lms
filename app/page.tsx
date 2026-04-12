@@ -3,6 +3,7 @@
 import type { SubmitEvent } from "react";
 
 const LOGIN_ERROR_MESSAGE = "LMS 로그인 중 오류가 발생했습니다.";
+const INVALID_CREDENTIALS_MESSAGE = "학번 또는 비밀번호가 잘못되었습니다.";
 
 async function handleSubmit(
   event: SubmitEvent<HTMLFormElement>,
@@ -25,6 +26,11 @@ async function handleSubmit(
       credentials: "include",
       body,
     });
+
+    if (loginResponse.status === 401) {
+      alert(INVALID_CREDENTIALS_MESSAGE);
+      return;
+    }
 
     if (!loginResponse.ok) {
       throw new Error(`Login request failed: ${loginResponse.status}`);
