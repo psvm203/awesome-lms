@@ -105,24 +105,45 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-base-200 p-4 sm:p-8">
-      <section className="mx-auto w-full max-w-3xl space-y-4">
-        <h1 className="text-2xl font-bold">강의 목록</h1>
-        <ul className="list rounded-box bg-base-100 shadow-xl">
-          {lectures.length === 0 ? (
-            <li className="list-row">
-              <div>표시할 강의가 없습니다.</div>
-            </li>
-          ) : (
-            lectures.map((lecture) => (
-              <li
+      <section className="mx-auto w-full max-w-3xl space-y-5">
+        <header>
+          <div>
+            <h1 className="text-2xl font-bold sm:text-3xl">강의 목록</h1>
+            <p className="text-sm text-base-content/70">수강할 강의를 선택해 주세요.</p>
+          </div>
+        </header>
+
+        {lectures.length === 0 ? (
+          <article className="card border border-dashed border-base-300 bg-base-100">
+            <div className="card-body py-10 text-center text-base-content/70">
+              표시할 강의가 없습니다.
+            </div>
+          </article>
+        ) : (
+          <div className="space-y-3">
+            {lectures.map((lecture) => (
+              <article
                 key={`${lecture.subject_id}-${lecture.week}-${lecture.title}`}
-                className="list-row"
+                className="card border border-base-300 bg-base-100 shadow-sm transition hover:shadow-md"
               >
-                <div>{`${lecture.subject_name} - ${lecture.title}`}</div>
-              </li>
-            ))
-          )}
-        </ul>
+                <div className="card-body p-4 sm:p-5">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <span className="text-base font-medium leading-snug">
+                      {`${lecture.subject_name} - ${lecture.title}`}
+                    </span>
+                    <button type="button" className="btn btn-sm btn-outline shrink-0">
+                      수강
+                    </button>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+
+        <button type="button" className="btn btn-primary btn-lg w-full">
+          전체 수강
+        </button>
       </section>
     </main>
   );
