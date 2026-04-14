@@ -4,10 +4,12 @@ import { useState, type SubmitEvent } from "react";
 
 const LOGIN_ERROR_MESSAGE = "LMS 로그인 중 오류가 발생했습니다.";
 const INVALID_CREDENTIALS_MESSAGE = "학번 또는 비밀번호가 잘못되었습니다.";
+const VIEW_ERROR_MESSAGE = "강의 수강 중 오류가 발생했습니다.";
+const LECTURE_EXIT_ANIMATION_MS = 900;
 
 type Lecture = {
     subject_id: string;
-    week: string;
+    sequence: string;
     subject_name: string;
     title: string;
 };
@@ -15,6 +17,12 @@ type Lecture = {
 export default function Home() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [lectures, setLectures] = useState<Lecture[] | null>(null);
+    const [viewingKey, setViewingKey] = useState<string | null>(null);
+    const [exitingLectureKeys, setExitingLectureKeys] = useState<string[]>([]);
+
+    function lectureKey(lecture: Lecture): string {
+        return `${lecture.subject_id}-${lecture.sequence}-${lecture.title}`;
+    }
 
     function handleLogout(): void {
         setLectures(null);
@@ -80,6 +88,56 @@ export default function Home() {
             alert(LOGIN_ERROR_MESSAGE);
         } finally {
             setIsSubmitting(false);
+        }
+    }
+
+    async function handleViewLecture(lecture: Lecture): Promise<void> {
+        const key = lectureKey(lecture);
+        if (viewingKey !== null || lectures === null || exitingLectureKeys.length > 0) {
+            return;
+        }
+
+        const body = [
+            `subject_id=${encodeURIComponent(lecture.subject_id).replace(/%20/g, "+")}`,
+            `sequence=${encodeURIComponent(lecture.sequence).replace(/%20/g, "+")}`,
+        ].join("&");
+
+        setViewingKey(key);
+
+        try {
+            const response = await fetch("http://localhost:8787/view", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+                credentials: "include",
+                body,
+            });
+
+            if (!response.ok) {
+                throw new Error(`View request failed: ${response.status}`);
+            }
+
+            const updatedLectures = (await response.json()) as Lecture[];
+            const updatedLectureKeys = new Set(updatedLectures.map(lectureKey));
+            const removedLectureKeys = lectures
+                .map(lectureKey)
+                .filter((currentKey) => !updatedLectureKeys.has(currentKey));
+
+            if (removedLectureKeys.length === 0) {
+                setLectures(updatedLectures);
+                return;
+            }
+
+            setExitingLectureKeys(removedLectureKeys);
+            window.setTimeout(() => {
+                setLectures(updatedLectures);
+                setExitingLectureKeys([]);
+            }, LECTURE_EXIT_ANIMATION_MS);
+        } catch {
+            alert(VIEW_ERROR_MESSAGE);
+        } finally {
+            setViewingKey(null);
         }
     }
 
@@ -150,8 +208,12 @@ export default function Home() {
                     <div className="space-y-3">
                         {lectures.map((lecture) => (
                             <article
-                                key={`${lecture.subject_id}-${lecture.sequence}-${lecture.title}`}
-                                className="card border border-base-300 bg-base-100 shadow-sm transition hover:shadow-md"
+                                key={lectureKey(lecture)}
+                                className={`card border border-base-300 bg-base-100 shadow-sm transition hover:shadow-md ${
+                                    exitingLectureKeys.includes(lectureKey(lecture))
+                                        ? "lecture-card-exit pointer-events-none"
+                                        : ""
+                                }`}
                             >
                                 <div className="card-body p-4 sm:p-5">
                                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -161,6 +223,9 @@ export default function Home() {
                                         <button
                                             type="button"
                                             className="btn btn-sm btn-info shrink-0 text-info-content"
+                                            onClick={() => void handleViewLecture(lecture)}
+                                            disabled={viewingKey !== null || exitingLectureKeys.length > 0}
+                                            aria-busy={viewingKey === lectureKey(lecture)}
                                         >
                                             수강
                                         </button>
