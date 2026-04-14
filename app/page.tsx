@@ -93,7 +93,11 @@ export default function Home() {
 
     async function handleViewLecture(lecture: Lecture): Promise<void> {
         const key = lectureKey(lecture);
-        if (viewingKey !== null || lectures === null || exitingLectureKeys.length > 0) {
+        if (
+            viewingKey !== null ||
+            lectures === null ||
+            exitingLectureKeys.length > 0
+        ) {
             return;
         }
 
@@ -209,8 +213,10 @@ export default function Home() {
                         {lectures.map((lecture) => (
                             <article
                                 key={lectureKey(lecture)}
-                                className={`card border border-base-300 bg-base-100 shadow-sm transition hover:shadow-md ${
-                                    exitingLectureKeys.includes(lectureKey(lecture))
+                                className={`card relative z-0 border border-base-300 bg-base-100 shadow-sm transition hover:shadow-md ${
+                                    exitingLectureKeys.includes(
+                                        lectureKey(lecture),
+                                    )
                                         ? "lecture-card-exit pointer-events-none"
                                         : ""
                                 }`}
@@ -223,9 +229,17 @@ export default function Home() {
                                         <button
                                             type="button"
                                             className="btn btn-sm btn-info shrink-0 text-info-content"
-                                            onClick={() => void handleViewLecture(lecture)}
-                                            disabled={viewingKey !== null || exitingLectureKeys.length > 0}
-                                            aria-busy={viewingKey === lectureKey(lecture)}
+                                            onClick={() =>
+                                                void handleViewLecture(lecture)
+                                            }
+                                            disabled={
+                                                viewingKey !== null ||
+                                                exitingLectureKeys.length > 0
+                                            }
+                                            aria-busy={
+                                                viewingKey ===
+                                                lectureKey(lecture)
+                                            }
                                         >
                                             수강
                                         </button>
