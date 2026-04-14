@@ -6,6 +6,7 @@ const LOGIN_ERROR_MESSAGE = "LMS 로그인 중 오류가 발생했습니다.";
 const INVALID_CREDENTIALS_MESSAGE = "학번 또는 비밀번호가 잘못되었습니다.";
 const VIEW_ERROR_MESSAGE = "강의 수강 중 오류가 발생했습니다.";
 const LECTURE_EXIT_ANIMATION_MS = 900;
+const PROXY_BASE_URL = "https://awesome-lms-proxy.psvm203.workers.dev";
 
 type Lecture = {
     subject_id: string;
@@ -48,7 +49,7 @@ export default function Home() {
         setIsSubmitting(true);
 
         try {
-            const loginResponse = await fetch("http://localhost:8787/login", {
+            const loginResponse = await fetch(`${PROXY_BASE_URL}/login`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded",
@@ -69,7 +70,7 @@ export default function Home() {
             }
 
             const lecturesResponse = await fetch(
-                "http://localhost:8787/lectures",
+                `${PROXY_BASE_URL}/lectures`,
                 {
                     method: "GET",
                     credentials: "include",
@@ -109,7 +110,7 @@ export default function Home() {
         setViewingKey(key);
 
         try {
-            const response = await fetch("http://localhost:8787/view", {
+            const response = await fetch(`${PROXY_BASE_URL}/view`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded",
