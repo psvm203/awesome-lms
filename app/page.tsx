@@ -19,6 +19,7 @@ export default function Home() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [lectures, setLectures] = useState<Lecture[] | null>(null);
     const [viewingKey, setViewingKey] = useState<string | null>(null);
+    const [isBulkViewing, setIsBulkViewing] = useState(false);
     const [exitingLectureKeys, setExitingLectureKeys] = useState<string[]>([]);
 
     function lectureKey(lecture: Lecture): string {
@@ -92,14 +93,16 @@ export default function Home() {
         }
     }
 
-    async function handleViewLecture(lecture: Lecture): Promise<void> {
+    async function runViewLecture(
+        lecture: Lecture,
+        sourceLectures: Lecture[],
+    ): Promise<Lecture[] | null> {
         const key = lectureKey(lecture);
         if (
             viewingKey !== null ||
-            lectures === null ||
-            exitingLectureKeys.length > 0
+            lectures === null
         ) {
-            return;
+            return null;
         }
 
         const body = [
@@ -125,13 +128,13 @@ export default function Home() {
 
             const updatedLectures = (await response.json()) as Lecture[];
             const updatedLectureKeys = new Set(updatedLectures.map(lectureKey));
-            const removedLectureKeys = lectures
+            const removedLectureKeys = sourceLectures
                 .map(lectureKey)
                 .filter((currentKey) => !updatedLectureKeys.has(currentKey));
 
             if (removedLectureKeys.length === 0) {
                 setLectures(updatedLectures);
-                return;
+                return updatedLectures;
             }
 
             setExitingLectureKeys(removedLectureKeys);
@@ -139,10 +142,62 @@ export default function Home() {
                 setLectures(updatedLectures);
                 setExitingLectureKeys([]);
             }, LECTURE_EXIT_ANIMATION_MS);
+            return updatedLectures;
         } catch {
             alert(VIEW_ERROR_MESSAGE);
+            return null;
         } finally {
             setViewingKey(null);
+        }
+    }
+
+    async function handleViewLecture(lecture: Lecture): Promise<void> {
+        if (lectures === null) {
+            return;
+        }
+
+        await runViewLecture(lecture, lectures);
+    }
+
+    async function handleBulkView(): Promise<void> {
+        if (
+            lectures === null ||
+            lectures.length === 0 ||
+            isBulkViewing ||
+            viewingKey !== null ||
+            exitingLectureKeys.length > 0
+        ) {
+            return;
+        }
+
+        setIsBulkViewing(true);
+
+        try {
+            let currentLectures = lectures;
+            const queue = [...lectures];
+
+            for (const lecture of queue) {
+                const exists = currentLectures.some(
+                    (candidate) => lectureKey(candidate) === lectureKey(lecture),
+                );
+
+                if (!exists) {
+                    continue;
+                }
+
+                const updatedLectures = await runViewLecture(
+                    lecture,
+                    currentLectures,
+                );
+
+                if (updatedLectures === null) {
+                    break;
+                }
+
+                currentLectures = updatedLectures;
+            }
+        } finally {
+            setIsBulkViewing(false);
         }
     }
 
@@ -234,6 +289,7 @@ export default function Home() {
                                                 void handleViewLecture(lecture)
                                             }
                                             disabled={
+                                                isBulkViewing ||
                                                 viewingKey !== null ||
                                                 exitingLectureKeys.length > 0
                                             }
@@ -251,8 +307,19 @@ export default function Home() {
                     </div>
                 )}
 
-                <button type="button" className="btn btn-primary btn-lg w-full">
-                    전체 수강
+                <button
+                    type="button"
+                    className="btn btn-primary btn-lg w-full"
+                    onClick={() => void handleBulkView()}
+                    disabled={
+                        isBulkViewing ||
+                        viewingKey !== null ||
+                        exitingLectureKeys.length > 0 ||
+                        lectures.length === 0
+                    }
+                    aria-busy={isBulkViewing}
+                >
+                    {isBulkViewing ? "전체 수강 중..." : "전체 수강"}
                 </button>
             </section>
         </main>
