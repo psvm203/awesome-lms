@@ -6,7 +6,7 @@ const LOGIN_ERROR_MESSAGE = "LMS 로그인 중 오류가 발생했습니다.";
 const INVALID_CREDENTIALS_MESSAGE = "학번 또는 비밀번호가 잘못되었습니다.";
 const VIEW_ERROR_MESSAGE = "강의 수강 중 오류가 발생했습니다.";
 const LECTURE_EXIT_ANIMATION_MS = 900;
-const PROXY_BASE_URL = "https://awesome-lms-proxy.psvm203.workers.dev";
+const PROXY_BASE_URL = "http://127.0.0.1:8787";
 
 type Lecture = {
     subject_id: string;
@@ -70,13 +70,10 @@ export default function Home() {
                 );
             }
 
-            const lecturesResponse = await fetch(
-                `${PROXY_BASE_URL}/lectures`,
-                {
-                    method: "GET",
-                    credentials: "include",
-                },
-            );
+            const lecturesResponse = await fetch(`${PROXY_BASE_URL}/lectures`, {
+                method: "GET",
+                credentials: "include",
+            });
 
             if (!lecturesResponse.ok) {
                 throw new Error(
@@ -98,10 +95,7 @@ export default function Home() {
         sourceLectures: Lecture[],
     ): Promise<Lecture[] | null> {
         const key = lectureKey(lecture);
-        if (
-            viewingKey !== null ||
-            lectures === null
-        ) {
+        if (viewingKey !== null || lectures === null) {
             return null;
         }
 
@@ -178,7 +172,8 @@ export default function Home() {
 
             for (const lecture of queue) {
                 const exists = currentLectures.some(
-                    (candidate) => lectureKey(candidate) === lectureKey(lecture),
+                    (candidate) =>
+                        lectureKey(candidate) === lectureKey(lecture),
                 );
 
                 if (!exists) {
